@@ -36,6 +36,8 @@ print_number_symbol:
 	mov	ebx, STDOUT			; 1
 	int 80h
 	ret
+%else
+%error define OS_FREEBSD or OS_LINUX
 %endif
 
 print_new_line:
