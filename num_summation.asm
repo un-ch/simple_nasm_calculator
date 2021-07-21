@@ -9,9 +9,9 @@ STDIN				equ 0
 STDOUT				equ 1
 STDERR				equ 2
 
-SYS_EXIT			equ 1
-SYS_READ			equ 3
-SYS_WRITE			equ 4
+SYSCALL_EXIT		equ 1
+SYSCALL_READ		equ 3
+SYSCALL_WRITE		equ 4
 
 section .bss
 
@@ -26,13 +26,13 @@ section .text
 print_number_symbol:
 %ifdef OS_FREEBSD
 	push STDOUT				; 1
-	mov	eax, SYS_WRITE		; 4
+	mov	eax, SYSCALL_WRITE	; 4
 	push eax				; avoiding calling "kernel" subroutine
 	int 80h
 	add esp, 16				; cleaning the stack
 	ret
 %elifdef OS_LINUX
-	mov	eax, SYS_WRITE		; 4
+	mov	eax, SYSCALL_WRITE	; 4
 	mov	ebx, STDOUT			; 1
 	int 80h
 	ret
@@ -43,7 +43,7 @@ print_new_line:
 	push NEW_LINE_LENGTH
 	push NEW_LINE
 	push STDOUT				; 1
-	mov eax, SYS_WRITE		; 4
+	mov eax, SYSCALL_WRITE	; 4
 	push eax				; avoiding calling "kernel" subroutine
 	int 80h
 	add esp, 16				; cleaning the stack
@@ -51,7 +51,7 @@ print_new_line:
 %elifdef OS_LINUX
 	mov ecx, NEW_LINE
 	mov edx, NEW_LINE_LENGTH
-	mov eax, SYS_WRITE		; 4
+	mov eax, SYSCALL_WRITE	; 4
 	mov ebx, STDOUT			; 1
 	int 80h
 	ret
@@ -63,14 +63,14 @@ _start:
 	push 1					; length
 	push summand_1
 	push STDIN
-	mov eax, SYS_READ		; 3
+	mov eax, SYSCALL_READ	; 3
 	push eax				; avoiding calling "kernel" subroutine
 	int 80h
 	add esp, 16				; cleaning the stack
 %elifdef OS_LINUX
 	mov ecx, summand_1
 	mov edx, 1				; length
-	mov eax, SYS_READ		; 3
+	mov eax, SYSCALL_READ	; 3
 	mov ebx, STDIN			; 0
 	int 80h
 %endif
@@ -80,7 +80,7 @@ _start:
 	push 1					; length
 	push eol_1
 	push STDIN				; 1
-	mov eax, SYS_READ		; 3
+	mov eax, SYSCALL_READ	; 3
 	push eax				; avoiding calling "kernel" subroutine
 	int 80h
 	add esp, 16				; cleaning the stack
@@ -88,7 +88,7 @@ _start:
 %elifdef OS_LINUX
 	mov ecx, eol_1
 	mov edx, 1				; length
-	mov eax, SYS_READ		; 3
+	mov eax, SYSCALL_READ	; 3
 	mov ebx, STDIN			; 0
 	int 80h
 %endif
@@ -98,14 +98,14 @@ _start:
 	push 1					; length
 	push summand_2
 	push STDIN
-	mov eax, SYS_READ		; 3
+	mov eax, SYSCALL_READ	; 3
 	push eax				; avoiding calling "kernel" subroutine
 	int 80h
 	add esp, 16				; cleaning the stack
 %elifdef OS_LINUX
 	mov ecx, summand_2
 	mov edx, 1				; length
-	mov eax, SYS_READ		; 3
+	mov eax, SYSCALL_READ	; 3
 	mov ebx, STDIN			; 0
 	int 80h
 %endif
@@ -115,7 +115,7 @@ _start:
 	push 1					; length
 	push eol_1
 	push STDIN				; 1
-	mov eax, SYS_READ		; 3
+	mov eax, SYSCALL_READ	; 3
 	push eax				; avoiding calling "kernel" subroutine
 	int 80h
 	add esp, 16				; cleaning the stack
@@ -123,7 +123,7 @@ _start:
 %elifdef OS_LINUX
 	mov ecx, eol_1
 	mov edx, 1				; length
-	mov eax, SYS_READ		; 3
+	mov eax, SYSCALL_READ	; 3
 	mov ebx, STDIN			; 0
 	int 80h
 %endif
@@ -148,7 +148,7 @@ _start:
 	push 1					; length
 	push sum
 	push STDOUT				; 1
-	mov	eax, SYS_WRITE		; 4
+	mov	eax, SYSCALL_WRITE	; 4
 	push eax				; avoiding calling "kernel" subroutine
 	int 80h
 	add esp, 16				; cleaning the stack
@@ -163,11 +163,11 @@ _start:
 quit:
 %ifdef OS_FREEBSD
 	push EXIT_SUCCESS_CODE
-	mov eax, SYS_EXIT		; 1
+	mov eax, SYSCALL_EXIT	; 1
 	push eax				; avoiding calling "kernel" subroutine
 	int 80h
 %elifdef OS_LINUX
-	mov eax, SYS_EXIT		; 1
+	mov eax, SYSCALL_EXIT	; 1
 	mov ebx, EXIT_SUCCESS_CODE
 	int 80h
 %endif
