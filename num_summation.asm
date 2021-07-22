@@ -144,8 +144,27 @@ _start:
 	; now [sum] holds the "real number value" of summation. \
 	; if we want to print its value, we should transformate summation value \
 	; due to the ascii table:
-	add [sum], byte 48
+	; add [sum], byte 48
 
+	; if (summation < 10) then print a single digit:
+	cmp al, 10
+	jl print_summation
+
+	mov ax, [sum]			; divident --> AX (16 bits)
+	mov bx, 10				; divider --> BX (16 bits)
+loop:
+	xor dx, dx
+	div bx
+	; quotient now in AX
+	; reminder now in DX
+	push dx
+loop_2:
+	pop dx
+	mov [sum], dx		; reminder --> DX
+
+
+print_summation:
+	add [sum], byte 48
 %ifdef OS_FREEBSD
 	push 1					; length
 	push sum
