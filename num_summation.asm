@@ -149,19 +149,34 @@ _start:
 	; if (summation < 10) then print a single digit:
 	cmp al, 10
 	jl print_summation
-
 	mov ax, [sum]			; divident --> AX (16 bits)
 	mov bx, 10				; divider --> BX (16 bits)
+	xor esi, esi
+
+	; push reminders:
 loop:
 	xor dx, dx
 	div bx
+	push dx
+	inc esi
 	; quotient now in AX
 	; reminder now in DX
-	push dx
+	cmp ax, 0
+	jne loop
 loop_2:
+	; pop and print reminders:
 	pop dx
-	mov [sum], dx		; reminder --> DX
+	mov [sum], dx
+	add [sum], byte 48
+	mov ecx, sum
+	mov edx, 1				; length
+	call print_number_symbol
+	dec esi
+	cmp esi, 0
+	jne loop_2
 
+	call print_new_line
+	jmp quit
 
 print_summation:
 	add [sum], byte 48
