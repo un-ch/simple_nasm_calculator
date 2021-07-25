@@ -21,6 +21,8 @@ summand_2			resb 1
 eol_2				resb 1
 sum					resb 1
 
+buffer				resb 120
+
 section .text
 
 print_number_symbol:
@@ -60,99 +62,30 @@ print_new_line:
 %endif
 
 _start:
-	; input summand 1:
-%ifdef OS_FREEBSD
-	push 1					; length
-	push summand_1
-	push STDIN
-	mov eax, SYSCALL_READ	; 3
-	push eax				; avoiding calling "kernel" subroutine
-	int 80h
-	add esp, 16				; cleaning the stack
-%elifdef OS_LINUX
-	mov ecx, summand_1
-	mov edx, 1				; length
+	mov esi, buffer			; buffer adress --> esi
+	mov edi, 0				; counter of chars
+again:
 	mov eax, SYSCALL_READ	; 3
 	mov ebx, STDIN			; 0
-	int 80h
-%endif
-
-	; correct new line representation:
-%ifdef OS_FREEBSD
-	push 1					; length
-	push eol_1
-	push STDIN				; 1
-	mov eax, SYSCALL_READ	; 3
-	push eax				; avoiding calling "kernel" subroutine
-	int 80h
-	add esp, 16				; cleaning the stack
-
-%elifdef OS_LINUX
-	mov ecx, eol_1
+	mov ecx, esi			; buffer adress --> ecx
 	mov edx, 1				; length
-	mov eax, SYSCALL_READ	; 3
-	mov ebx, STDIN			; 0
 	int 80h
-%endif
 
-	; input summand 2:
-%ifdef OS_FREEBSD
-	push 1					; length
-	push summand_2
-	push STDIN
-	mov eax, SYSCALL_READ	; 3
-	push eax				; avoiding calling "kernel" subroutine
-	int 80h
-	add esp, 16				; cleaning the stack
-%elifdef OS_LINUX
-	mov ecx, summand_2
-	mov edx, 1				; length
-	mov eax, SYSCALL_READ	; 3
-	mov ebx, STDIN			; 0
-	int 80h
-%endif
+	cmp [esi], byte 0		; EOF ?
+	je loop
 
-	; correct new line representation:
-%ifdef OS_FREEBSD
-	push 1					; length
-	push eol_1
-	push STDIN				; 1
-	mov eax, SYSCALL_READ	; 3
-	push eax				; avoiding calling "kernel" subroutine
-	int 80h
-	add esp, 16				; cleaning the stack
-
-%elifdef OS_LINUX
-	mov ecx, eol_1
-	mov edx, 1				; length
-	mov eax, SYSCALL_READ	; 3
-	mov ebx, STDIN			; 0
-	int 80h
-%endif
-
-	xor al, al ; AL register will hold the summation of two numbers
-
-	sub [summand_1], byte 48 ; get the "real number value" through its ascii code
-	add al, [summand_1]
-	add [summand_1], byte 48 ; ascii code of the number
-
-	sub [summand_2], byte 48 ; get the "real number value" through its ascii code
-	add al, [summand_2]
-	add [summand_2], byte 48 ; ascii code of the number
-
-	mov [sum], al
-	; now [sum] holds the "real number value" of summation. \
-	; if we want to print its value, we should transformate summation value \
-	; due to the ascii table:
-	; add [sum], byte 48
+	cmp [esi], byte 10		; new line ?
+	inc esi					; next byte of buffer
+	;inc edi					; inc char counter
+	jmp again
 
 	; if (summation < 10) then print a single digit:
-	cmp al, 10
-	jl print_summation
-	mov ax, [sum]			; divident --> AX (16 bits)
+	; cmp al, 10
+	; jl print_summation
+	mov ax, [buffer]		; divident --> AX (16 bits)
 	mov bx, 10				; divider --> BX (16 bits)
+	; esi will hold summation:
 	xor esi, esi
-
 	; push reminders:
 loop:
 	xor dx, dx
@@ -177,6 +110,19 @@ loop_2:
 
 	call print_new_line
 	jmp quit
+
+nice_loop:
+	xor edi, edi
+	mov esi, buffer
+nice_loop_2:
+	mov ecx, esi			; adress for syscall
+	mov edx, 1				; length
+	call print_number_symbol
+	;call print_new_line
+	inc esi
+	cmp [esi], byte 0		; EOF ?
+	je quit
+	jmp nice_loop_2
 
 print_summation:
 	add [sum], byte 48
@@ -207,3 +153,20 @@ quit:
 	mov ebx, EXIT_SUCCESS_CODE
 	int 80h
 %endif
+
+;%ifdef OS_FREEBSD
+	;push 1					; length
+	;push summand_1
+	;push STDIN
+	;mov eax, SYSCALL_READ	; 3
+	;push eax				; avoiding calling "kernel" subroutine
+	;int 80h
+	;add esp, 16				; cleaning the stack
+;%elifdef OS_LINUX
+	;mov ecx, summand_1
+	;mov edx, 1				; length
+	;mov eax, SYSCALL_READ	; 3
+	;mov ebx, STDIN			; 0
+	;int 80h
+;%endif
+
