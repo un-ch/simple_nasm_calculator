@@ -20,7 +20,7 @@ eol_1				resb 1
 summand_2			resb 1
 eol_2				resb 1
 sum					resb 1
-result				resb 1
+result				resb 4
 
 buffer				resb 120
 
@@ -84,7 +84,7 @@ end_input:
 	; EDI will hold summ:
 loop:
 	cmp byte [esi], 0		; EOF ?
-	je print_summ
+	je print_remainder
 	cmp byte [esi], 10		; line feed ?
 	je .next_digit
 	sub byte [esi], 48		; get value of digit
@@ -95,7 +95,6 @@ loop:
 	jmp loop
 
 	; EDI holds summ now
-
 print_summ:
 	mov [sum], edi
 	add byte [sum], 48		; get digit
@@ -116,17 +115,67 @@ print_summ:
 	call print_new_line
 
 print_remainder:
+	mov [sum], edi
 	xor edx, edx
-	mov ax, [sum]
-	mov si, 10
-	div si
+	xor ebp, ebp
+	mov al, [sum]
 
-	mov [result], dx		; reminder (DX) --> result
-	add byte [result], 48	; get digit
+	;mov si, 10
+	;mov al, 10
+	mov esi, 10
+
+make_div:
+	div esi
+	push edx					; push reminder
+	xor edx, edx
+	div esi
+	push edx					; push reminder
+	jmp lp
+pop_remainder:
+	mov [result], edx			; reminder (EDX) --> result
+	add byte [result], 48		; get digit
+
 	mov ecx, result
-	mov edx, 1
-	call print_number_symbol
-	sub byte [sum], 48		; get value of digit
+	mov edx, 4
+	mov	eax, SYSCALL_WRITE		; 4
+	mov	ebx, STDOUT				; 1
+	int 80h
+
+	xor edx, edx
+	pop eax
+	div esi
+
+	mov [result], edx		; reminder (EDX) --> result
+	add byte [result], 48		; get digit
+
+	mov ecx, result
+	mov edx, 4
+	mov	eax, SYSCALL_WRITE		; 4
+	mov	ebx, STDOUT				; 1
+	int 80h
+	
+lp:
+	pop eax
+	mov [result], eax
+	add byte [result], 48		; get digit
+
+	mov ecx, result
+	mov edx, 4
+	mov	eax, SYSCALL_WRITE		; 4
+	mov	ebx, STDOUT				; 1
+	int 80h
+
+	pop eax
+	mov [result], eax
+	add byte [result], 48		; get digit
+
+	mov ecx, result
+	mov edx, 4
+	mov	eax, SYSCALL_WRITE		; 4
+	mov	ebx, STDOUT				; 1
+	int 80h
+	
+end_div:
 	call print_new_line
 
 quit:
