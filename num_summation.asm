@@ -116,42 +116,19 @@ print_remainder:
 	xor eax, eax
 	xor ebp, ebp
 	mov al, [result]		; ??????????????????
-
-	;mov si, 10
-	;mov al, 10
 	mov esi, 10
 
 make_div:
 	div esi
 	push edx				; push reminder
 	xor edx, edx
-	div esi
-	push edx				; push reminder
-	jmp lp
+	inc ebp
+	cmp eax, 0				; if the quotient == 0
+	jne make_div
 pop_remainder:
-	mov [result], edx		; reminder (EDX) --> result
-	add byte [result], 48	; get digit
-
-	mov ecx, result
-	mov edx, 4
-	mov	eax, SYSCALL_WRITE	; 4
-	mov	ebx, STDOUT			; 1
-	int 80h
-
-	xor edx, edx
-	pop eax
-	div esi
-
-	mov [result], edx		; reminder (EDX) --> result
-	add byte [result], 48	; get digit
-
-	mov ecx, result
-	mov edx, 4
-	mov	eax, SYSCALL_WRITE	; 4
-	mov	ebx, STDOUT			; 1
-	int 80h
-	
-lp:
+	xor eax, eax
+	cmp ebp, 0
+	je end_div
 	pop eax
 	mov [result], eax
 	add byte [result], 48	; get digit
@@ -162,19 +139,11 @@ lp:
 	mov	ebx, STDOUT			; 1
 	int 80h
 
-	pop eax
-	mov [result], eax
-	add byte [result], 48	; get digit
-
-	mov ecx, result
-	mov edx, 4
-	mov	eax, SYSCALL_WRITE	; 4
-	mov	ebx, STDOUT			; 1
-	int 80h
+	dec ebp
+	jmp pop_remainder
 	
 end_div:
 	call print_new_line
-
 
 quit:
 %ifdef OS_FREEBSD
