@@ -15,9 +15,7 @@ SYSCALL_WRITE		equ 4
 
 section .bss
 
-sum					resb 1
 result				resb 4
-
 buffer				resb 120
 
 section .text
@@ -60,7 +58,6 @@ print_new_line:
 
 _start:
 	mov esi, buffer			; buffer adress --> ESI
-	;mov edi, 0				; counter of chars
 again:
 	; input number:
 	mov eax, SYSCALL_READ	; 3
@@ -80,51 +77,30 @@ end_input:
 	; EDI will hold summ:
 loop:
 	cmp byte [esi], 0		; EOF ?
-	je print_remainder
+	je div_preparation
 	cmp byte [esi], 10		; line feed ?
 	je .next_digit
 	sub byte [esi], 48		; get value of digit
 	add edi, [esi]			; add to summ
 	add byte [esi], 48
 .next_digit:
-	inc esi					; next simbol(?) in buffer memory
+	inc esi					; next symbol(?) in buffer memory
 	jmp loop
-
 	; EDI holds summ now
-print_summ:
-	mov [sum], edi
-	add byte [sum], 48		; get digit
-%ifdef OS_FREEBSD
-	push 1					; length
-	push sum
-	push STDOUT				; 1
-	mov	eax, SYSCALL_WRITE	; 4
-	push eax				; avoiding calling "kernel" subroutine
-	int 80h
-	add esp, 16				; cleaning the stack
-%elifdef OS_LINUX
-	mov ecx, sum
-	mov edx, 1				; length
-	call print_number_symbol
-%endif
-	sub byte [sum], 48		; get value of digit
-	call print_new_line
-
-print_remainder:
+div_preparation:
 	mov [result], edi
 	xor edx, edx
 	xor eax, eax
 	xor ebp, ebp
 	mov al, [result]		; ??????????????????
 	mov esi, 10
-
-make_div:
+push_remainder:
 	div esi
 	push edx				; push reminder
 	xor edx, edx
 	inc ebp
 	cmp eax, 0				; if the quotient == 0
-	jne make_div
+	jne push_remainder
 pop_remainder:
 	xor eax, eax
 	cmp ebp, 0
@@ -133,6 +109,7 @@ pop_remainder:
 	mov [result], eax
 	add byte [result], 48	; get digit
 
+	; print digit:
 	mov ecx, result
 	mov edx, 4
 	mov	eax, SYSCALL_WRITE	; 4
@@ -141,10 +118,8 @@ pop_remainder:
 
 	dec ebp
 	jmp pop_remainder
-	
 end_div:
 	call print_new_line
-
 quit:
 %ifdef OS_FREEBSD
 	push EXIT_SUCCESS_CODE
