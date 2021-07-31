@@ -15,10 +15,6 @@ SYSCALL_WRITE		equ 4
 
 section .bss
 
-summand_1			resb 1
-eol_1				resb 1
-summand_2			resb 1
-eol_2				resb 1
 sum					resb 1
 result				resb 4
 
@@ -115,10 +111,11 @@ print_summ:
 	call print_new_line
 
 print_remainder:
-	mov [sum], edi
+	mov [result], edi
 	xor edx, edx
+	xor eax, eax
 	xor ebp, ebp
-	mov al, [sum]
+	mov al, [result]		; ??????????????????
 
 	;mov si, 10
 	;mov al, 10
@@ -126,19 +123,19 @@ print_remainder:
 
 make_div:
 	div esi
-	push edx					; push reminder
+	push edx				; push reminder
 	xor edx, edx
 	div esi
-	push edx					; push reminder
+	push edx				; push reminder
 	jmp lp
 pop_remainder:
-	mov [result], edx			; reminder (EDX) --> result
-	add byte [result], 48		; get digit
+	mov [result], edx		; reminder (EDX) --> result
+	add byte [result], 48	; get digit
 
 	mov ecx, result
 	mov edx, 4
-	mov	eax, SYSCALL_WRITE		; 4
-	mov	ebx, STDOUT				; 1
+	mov	eax, SYSCALL_WRITE	; 4
+	mov	ebx, STDOUT			; 1
 	int 80h
 
 	xor edx, edx
@@ -146,37 +143,38 @@ pop_remainder:
 	div esi
 
 	mov [result], edx		; reminder (EDX) --> result
-	add byte [result], 48		; get digit
+	add byte [result], 48	; get digit
 
 	mov ecx, result
 	mov edx, 4
-	mov	eax, SYSCALL_WRITE		; 4
-	mov	ebx, STDOUT				; 1
+	mov	eax, SYSCALL_WRITE	; 4
+	mov	ebx, STDOUT			; 1
 	int 80h
 	
 lp:
 	pop eax
 	mov [result], eax
-	add byte [result], 48		; get digit
+	add byte [result], 48	; get digit
 
 	mov ecx, result
 	mov edx, 4
-	mov	eax, SYSCALL_WRITE		; 4
-	mov	ebx, STDOUT				; 1
+	mov	eax, SYSCALL_WRITE	; 4
+	mov	ebx, STDOUT			; 1
 	int 80h
 
 	pop eax
 	mov [result], eax
-	add byte [result], 48		; get digit
+	add byte [result], 48	; get digit
 
 	mov ecx, result
 	mov edx, 4
-	mov	eax, SYSCALL_WRITE		; 4
-	mov	ebx, STDOUT				; 1
+	mov	eax, SYSCALL_WRITE	; 4
+	mov	ebx, STDOUT			; 1
 	int 80h
 	
 end_div:
 	call print_new_line
+
 
 quit:
 %ifdef OS_FREEBSD
