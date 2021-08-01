@@ -19,7 +19,6 @@ remainder			resb 4
 buffer				resb 120
 
 section .text
-
 print_digit:
 %ifdef OS_FREEBSD
 	push STDOUT				; 1
@@ -60,11 +59,21 @@ _start:
 	mov esi, buffer			; buffer adress --> ESI
 again:
 	; input number:
+%ifdef OS_FREEBSD
+	push 1					; length
+	push esi
+	push STDIN
+	mov eax, SYSCALL_READ	; 3
+	push eax				; avoiding calling "kernel" subroutine
+	int 80h
+	add esp, 16				; cleaning the stack
+%elifdef OS_LINUX
 	mov eax, SYSCALL_READ	; 3
 	mov ebx, STDIN			; 0
 	mov ecx, esi			; buffer adress --> ecx
 	mov edx, 1				; length
 	int 80h
+%endif
 
 	cmp byte [esi], 0		; EOF ?
 	je end_input
