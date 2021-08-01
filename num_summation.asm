@@ -14,7 +14,6 @@ SYSCALL_READ		equ 3
 SYSCALL_WRITE		equ 4
 
 section .bss
-
 remainder			resb 4
 buffer				resb 120
 
@@ -118,14 +117,20 @@ pop_remainder:
 	mov [remainder], eax
 	add byte [remainder], 48; get digit
 
+%ifdef OS_FREEBSD
+	push 4
+	push remainder
+%elifdef OS_LINUX
 	mov ecx, remainder
 	mov edx, 4
+%endif
 	call print_digit
 
 	dec ebp
 	jmp pop_remainder
 end_div:
 	call print_new_line
+
 quit:
 %ifdef OS_FREEBSD
 	push EXIT_SUCCESS_CODE
