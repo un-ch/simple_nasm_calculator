@@ -15,12 +15,13 @@ SYSCALL_WRITE		equ 4
 
 section .bss
 
-result				resb 4
+sum					resb 4
+remainder			resb 4
 buffer				resb 120
 
 section .text
 
-print_number_symbol:
+print_digit:
 %ifdef OS_FREEBSD
 	push STDOUT				; 1
 	mov	eax, SYSCALL_WRITE	; 4
@@ -74,7 +75,7 @@ again:
 end_input:
 	mov esi, buffer			; buffer adress --> ESI
 	xor edi, edi
-	; EDI will hold summ:
+	; EDI will hold sum:
 loop:
 	cmp byte [esi], 0		; EOF ?
 	je div_preparation
@@ -88,33 +89,30 @@ loop:
 	jmp loop
 	; EDI holds summ now
 div_preparation:
-	mov [result], edi
+	mov [sum], edi
 	xor edx, edx
 	xor eax, eax
 	xor ebp, ebp
-	mov al, [result]		; ??????????????????
+	mov al, [sum]			; ??????????????????
 	mov esi, 10
 push_remainder:
 	div esi
-	push edx				; push reminder
+	push edx				; push remainder
 	xor edx, edx
-	inc ebp
-	cmp eax, 0				; if the quotient == 0
+	inc ebp					; digit counter
+	test eax, eax			; if the quotient equal to 0 (cmp eax, 0)
 	jne push_remainder
 pop_remainder:
 	xor eax, eax
-	cmp ebp, 0
+	test ebp, ebp			; digit counter
 	je end_div
 	pop eax
-	mov [result], eax
-	add byte [result], 48	; get digit
+	mov [remainder], eax
+	add byte [remainder], 48; get digit
 
-	; print digit:
-	mov ecx, result
+	mov ecx, remainder
 	mov edx, 4
-	mov	eax, SYSCALL_WRITE	; 4
-	mov	ebx, STDOUT			; 1
-	int 80h
+	call print_digit
 
 	dec ebp
 	jmp pop_remainder
