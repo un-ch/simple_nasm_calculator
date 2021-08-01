@@ -15,7 +15,6 @@ SYSCALL_WRITE		equ 4
 
 section .bss
 
-sum					resb 4
 remainder			resb 4
 buffer				resb 120
 
@@ -75,25 +74,25 @@ again:
 end_input:
 	mov esi, buffer			; buffer adress --> ESI
 	xor edi, edi
+	xor eax, eax
 	; EDI will hold sum:
 loop:
 	cmp byte [esi], 0		; EOF ?
 	je div_preparation
 	cmp byte [esi], 10		; line feed ?
 	je .next_digit
-	sub byte [esi], 48		; get value of digit
-	add edi, [esi]			; add to summ
-	add byte [esi], 48
+	movzx eax, byte [esi]
+	sub eax, 48
+	add edi, eax
 .next_digit:
 	inc esi					; next symbol(?) in buffer memory
 	jmp loop
 	; EDI holds summ now
 div_preparation:
-	mov [sum], edi
 	xor edx, edx
 	xor eax, eax
 	xor ebp, ebp
-	mov al, [sum]			; ??????????????????
+	mov eax, edi
 	mov esi, 10
 push_remainder:
 	div esi
