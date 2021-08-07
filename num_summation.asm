@@ -79,16 +79,15 @@ again:
 	inc esi					; next byte of buffer memory
 	jmp again
 
+	; ESI now holds the adress of the last input element in buffer memory \
+	; we assume that current ESI value is limited null;
 end_input:
-	;mov esi, buffer			; buffer adress --> ESI
 	xor edi, edi
 	xor eax, eax
-	xor ebx, ebx			; digit counter
-	; ESI now holds the adress of the last input element in buffer memory \
-	; we assume that ESI value is limited null;
+	xor ebx, ebx
+
 	; EDI will hold sum:
 	sub esi, 1				; move to a penultimate element in the buffer memory
-	mov ebx, 0				; first degree of 10 for the decimal representation
 loop:
 	cmp esi, buffer			; first element ?
 	jl div_preparation
@@ -117,12 +116,28 @@ div_preparation:
 	mov eax, edi
 	mov esi, 10
 push_remainder:
+	;div esi
+	;push edx				; push remainder
+	;xor edx, edx
+	;inc ebp				; digit counter
+	;test eax, eax			; if the quotient is equal to 0 (cmp eax, 0)
+	;jne push_remainder
+
 	div esi
+	test eax, eax			; if the quotient is equal to 0
+	je .last_push
 	push edx				; push remainder
 	xor edx, edx
-	inc ebp					; digit counter
-	test eax, eax			; if the quotient equal to 0 (cmp eax, 0)
-	jne push_remainder
+	inc ebp
+	jmp push_remainder
+
+.last_push:
+	push edx
+	xor edx, edx
+	; disable 'poping' the first remainder;
+	; the cheat way to avoid printing an extra '0' at the end of the sum:
+	;inc ebp
+
 pop_remainder:
 	xor eax, eax
 	test ebp, ebp			; digit counter
