@@ -80,21 +80,35 @@ again:
 	jmp again
 
 end_input:
-	mov esi, buffer			; buffer adress --> ESI
+	;mov esi, buffer			; buffer adress --> ESI
 	xor edi, edi
 	xor eax, eax
+	xor ebx, ebx			; digit counter
+	; ESI now holds the adress of the last input element in buffer memory \
+	; we assume that ESI value is limited null;
 	; EDI will hold sum:
+	sub esi, 1				; move to a penultimate element in the buffer memory
+	mov ebx, 0				; first degree of 10 for the decimal representation
 loop:
-	cmp byte [esi], 0		; EOF ?
-	je div_preparation
+	cmp esi, buffer			; first element ?
+	jl div_preparation
 	cmp byte [esi], 10		; line feed ?
-	je .next_digit
-	movzx eax, byte [esi]
-	sub eax, 48
-	add edi, eax
+	je .next_summand
 .next_digit:
-	inc esi					; next symbol(?) in buffer memory
+	mov eax, 10
+	mul ebx
+	mov ebx, eax			; next degree of 10
+	movzx eax, byte [esi]
+	sub eax, 48				; get value
+	mul ebx
+	add edi, eax
+	dec esi					; previous symbol(?) in buffer memory
 	jmp loop
+.next_summand:
+	dec esi					; previous symbol(?) in buffer memory
+	mov ebx, 1				; prepare degree of 10
+	jmp loop
+
 	; EDI holds summ now
 div_preparation:
 	xor edx, edx
@@ -116,7 +130,6 @@ pop_remainder:
 	pop eax
 	mov [remainder], eax
 	add byte [remainder], 48; get digit
-
 %ifdef OS_FREEBSD
 	push 4
 	push remainder
@@ -125,7 +138,6 @@ pop_remainder:
 	mov edx, 4
 %endif
 	call print_digit
-
 	dec ebp
 	jmp pop_remainder
 end_div:
