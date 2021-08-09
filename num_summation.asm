@@ -76,71 +76,66 @@ again:
 
 	cmp byte [esi], 0		; EOF ?
 	je end_input
-	inc esi					; next byte of buffer memory
+	inc esi					; next byte of [buffer] memory
 	jmp again
 
-	; ESI now holds the adress of the last input element in buffer memory \
+	; ESI now holds the adress of the last input element in [buffer] memory \
 	; we assume that current ESI value is limited null;
 end_input:
 	xor edi, edi
 	xor eax, eax
 	xor ebx, ebx
 
+	sub esi, 1				; move to a penultimate element in the [buffer] memory
+
+	; EBX will hold the result of raising the base 10 to the power 0, \
+	; which is need for decimal representation
+	mov ebx, 1
 	; EDI will hold sum:
-	sub esi, 1				; move to a penultimate element in the buffer memory
 loop:
 	cmp esi, buffer			; first element ?
 	jl div_preparation
 	cmp byte [esi], 10		; line feed ?
 	je .next_summand
 .next_digit:
-	mov eax, 10
-	mul ebx
-	mov ebx, eax			; next degree of 10
 	movzx eax, byte [esi]
 	sub eax, 48				; get value
 	mul ebx
-	add edi, eax
-	dec esi					; previous symbol(?) in buffer memory
+	add edi, eax			; EDI holds current sum
+	dec esi					; previous byte(?) in buffer memory
+
+	; update the result of raising the base 10 to the power for the next iteration:
+	mov eax, 10
+	mul ebx
+	mov ebx, eax
+
 	jmp loop
 .next_summand:
-	dec esi					; previous symbol(?) in buffer memory
-	mov ebx, 1				; prepare degree of 10
+	dec esi					; previous byte(?) in buffer memory
+	mov ebx, 1				; result of raising the base 10 to the power 0
 	jmp loop
 
 	; EDI holds summ now
 div_preparation:
-	xor edx, edx
-	xor eax, eax
-	xor ebp, ebp
 	mov eax, edi
 	mov esi, 10
 push_remainder:
-	;div esi
-	;push edx				; push remainder
-	;xor edx, edx
-	;inc ebp				; digit counter
-	;test eax, eax			; if the quotient is equal to 0 (cmp eax, 0)
-	;jne push_remainder
-
 	div esi
 	test eax, eax			; if the quotient is equal to 0
 	je .last_push
 	push edx				; push remainder
 	xor edx, edx
-	inc ebp
+	inc ebp					; counting the numbers of "pushing"
 	jmp push_remainder
 
 .last_push:
 	push edx
 	xor edx, edx
-	; disable 'poping' the first remainder;
-	; the cheat way to avoid printing an extra '0' at the end of the sum:
-	;inc ebp
+	inc ebp					; counting the numbers of "pushing"
 
 pop_remainder:
 	xor eax, eax
-	test ebp, ebp			; digit counter
+	test ebp, ebp			; if counter of "pushing" is equal to 0
 	je end_div
 	pop eax
 	mov [remainder], eax
