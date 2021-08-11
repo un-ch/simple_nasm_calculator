@@ -19,40 +19,43 @@ buffer				resb 120
 
 section .text
 print_digit:
+	push ebp				; save an old value of EBP
+	mov ebp, esp
 %ifdef OS_FREEBSD
 	push STDOUT				; 1
 	mov	eax, SYSCALL_WRITE	; 4
 	push eax				; avoiding calling "kernel" subroutine
-	int 80h
-	add esp, 16				; cleaning the stack
-	ret
 %elifdef OS_LINUX
 	mov	eax, SYSCALL_WRITE	; 4
 	mov	ebx, STDOUT			; 1
-	int 80h
-	ret
 %else
 %error define OS_FREEBSD or OS_LINUX
 %endif
+	int 80h
+	mov esp, ebp
+	pop ebp					; restore an old value of EBP
+	ret
 
 print_new_line:
+	push ebp
+	mov ebp, esp
 %ifdef OS_FREEBSD
 	push NEW_LINE_LENGTH
 	push NEW_LINE
 	push STDOUT				; 1
 	mov eax, SYSCALL_WRITE	; 4
 	push eax				; avoiding calling "kernel" subroutine
-	int 80h
-	add esp, 16				; cleaning the stack
-	ret
+	;add esp, 16				; cleaning the stack
 %elifdef OS_LINUX
 	mov ecx, NEW_LINE
 	mov edx, NEW_LINE_LENGTH
 	mov eax, SYSCALL_WRITE	; 4
 	mov ebx, STDOUT			; 1
-	int 80h
-	ret
 %endif
+	int 80h
+	mov esp, ebp
+	pop ebp
+	ret
 
 _start:
 	mov esi, buffer			; buffer adress --> ESI
@@ -143,11 +146,16 @@ pop_remainder:
 %ifdef OS_FREEBSD
 	push 4
 	push remainder
+	push STDOUT
+	mov	eax, SYSCALL_WRITE	; 4
+	push eax				; avoiding calling "kernel" subroutine
+	int 80h
+	add esp, 16				; cleaning the stack
 %elifdef OS_LINUX
 	mov ecx, remainder
 	mov edx, 4
-%endif
 	call print_digit
+%endif
 	dec ebp
 	jmp pop_remainder
 end_div:
