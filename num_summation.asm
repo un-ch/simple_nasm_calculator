@@ -4,6 +4,8 @@ section .data
 NEW_LINE			db	10
 NEW_LINE_LENGTH		equ	$-NEW_LINE
 EXIT_SUCCESS_CODE 	equ	0
+UNEXPECT_MSG		db	"unexpected symbol here", 10
+UNEXPECT_MSG_LENGTH	equ $-UNEXPECT_MSG
 
 STDIN				equ 0
 STDOUT				equ 1
@@ -79,15 +81,39 @@ again:
 	mov edx, 1				; length
 	int 80h
 %endif
-
 	cmp byte [esi], 0		; EOF ?
-	je end_input
+	je .end_input
+	cmp byte [esi], 10
+	je .next_byte
+	cmp byte [esi], 48
+	jb .unexpected_symbol
+	cmp byte [esi], 57
+	ja .unexpected_symbol
+.next_byte:
 	inc esi					; next byte of [buffer] memory
+	jmp again
+
+.unexpected_symbol:
+%ifdef OS_FREEBSD
+	push UNEXPECT_MSG_LENGTH
+	push UNEXPECT_MSG
+	push STDOUT
+	mov eax, SYSCALL_WRITE
+	push eax
+	int 80h
+	add esp, 16				; cleaning the stack
+%elifdef OS_LINUX
+	mov eax, SYSCALL_WRITE
+	mov ebx, STDOUT
+	mov ecx, UNEXPECT_MSG
+	mov edx, UNEXPECT_MSG_LENGTH
+	int 80h
+%endif
 	jmp again
 
 	; ESI now holds the adress of the last input element in [buffer] memory \
 	; we assume that current ESI value is limited null;
-end_input:
+.end_input:
 	xor edi, edi
 	xor eax, eax
 	xor ebx, ebx
@@ -149,6 +175,7 @@ pop_remainder:
 %ifdef OS_FREEBSD
 	push 4
 	push remainder
+	;call print_digit
 	push STDOUT
 	mov	eax, SYSCALL_WRITE	; 4
 	push eax				; avoiding calling "kernel" subroutine
