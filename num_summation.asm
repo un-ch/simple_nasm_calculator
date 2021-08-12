@@ -25,19 +25,21 @@ print_digit:
 	push STDOUT				; 1
 	mov	eax, SYSCALL_WRITE	; 4
 	push eax				; avoiding calling "kernel" subroutine
+	int 80h
+	add esp, 16				; cleaning the stack
 %elifdef OS_LINUX
 	mov	eax, SYSCALL_WRITE	; 4
 	mov	ebx, STDOUT			; 1
+	int 80h
 %else
 %error define OS_FREEBSD or OS_LINUX
 %endif
-	int 80h
 	mov esp, ebp
 	pop ebp					; restore an old value of EBP
 	ret
 
 print_new_line:
-	push ebp
+	push ebp				; save an old value of EBP
 	mov ebp, esp
 %ifdef OS_FREEBSD
 	push NEW_LINE_LENGTH
@@ -45,16 +47,17 @@ print_new_line:
 	push STDOUT				; 1
 	mov eax, SYSCALL_WRITE	; 4
 	push eax				; avoiding calling "kernel" subroutine
-	;add esp, 16				; cleaning the stack
+	int 80h
+	add esp, 16				; cleaning the stack
 %elifdef OS_LINUX
 	mov ecx, NEW_LINE
 	mov edx, NEW_LINE_LENGTH
 	mov eax, SYSCALL_WRITE	; 4
 	mov ebx, STDOUT			; 1
-%endif
 	int 80h
+%endif
 	mov esp, ebp
-	pop ebp
+	pop ebp					; restore an old value of EBP
 	ret
 
 _start:
