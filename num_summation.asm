@@ -24,12 +24,16 @@ print_digit:
 	push ebp				; save an old value of EBP
 	mov ebp, esp
 %ifdef OS_FREEBSD
+	push 4
+	push remainder
 	push STDOUT				; 1
 	mov	eax, SYSCALL_WRITE	; 4
 	push eax				; avoiding calling "kernel" subroutine
 	int 80h
 	add esp, 16				; cleaning the stack
 %elifdef OS_LINUX
+	mov ecx, remainder
+	mov edx, 4
 	mov	eax, SYSCALL_WRITE	; 4
 	mov	ebx, STDOUT			; 1
 	int 80h
@@ -159,12 +163,10 @@ push_remainder:
 	xor edx, edx
 	inc ebp					; counting the numbers of "pushing"
 	jmp push_remainder
-
 .last_push:
 	push edx
 	xor edx, edx
 	inc ebp					; counting the numbers of "pushing"
-
 pop_remainder:
 	xor eax, eax
 	test ebp, ebp			; if counter of "pushing" is equal to 0
@@ -172,21 +174,8 @@ pop_remainder:
 	pop eax
 	mov [remainder], eax
 	add byte [remainder], 48; get digit
-%ifdef OS_FREEBSD
-	push 4
-	push remainder
-	;call print_digit
-	push STDOUT
-	mov	eax, SYSCALL_WRITE	; 4
-	push eax				; avoiding calling "kernel" subroutine
-	int 80h
-	add esp, 16				; cleaning the stack
-%elifdef OS_LINUX
-	mov ecx, remainder
-	mov edx, 4
 	call print_digit
-%endif
-	dec ebp
+	dec ebp					; decrement the counter of "pushing"
 	jmp pop_remainder
 end_div:
 	call print_new_line
