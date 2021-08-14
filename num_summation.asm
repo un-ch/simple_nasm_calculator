@@ -6,6 +6,8 @@ NEW_LINE_LENGTH		equ	$-NEW_LINE
 EXIT_SUCCESS_CODE 	equ	0
 UNEXPECT_MSG		db	"unexpected symbol here", 10
 UNEXPECT_MSG_LENGTH	equ $-UNEXPECT_MSG
+LIMITING_LINE		db	"____", 10
+LIMIT_LINE_LENGTH	equ	$-LIMITING_LINE
 
 STDIN				equ 0
 STDOUT				equ 1
@@ -64,6 +66,28 @@ print_new_line:
 %endif
 	mov esp, ebp
 	pop ebp					; restore an old value of EBP
+	ret
+
+print_limiting_line:
+	push ebp
+	mov ebp, esp
+%ifdef OS_FREEBSD
+	push LIMIT_LINE_LENGTH
+	push LIMITING_LINE
+	push STDOUT
+	mov eax, SYSCALL_WRITE
+	push eax
+	int 80h
+	add esp, 16
+%elifdef OS_LINUX
+	mov ecx, LIMITING_LINE
+	mov edx, LIMIT_LINE_LENGTH
+	mov eax, SYSCALL_WRITE
+	mov ebx, STDOUT
+	int 80h
+%endif
+	mov esp, ebp
+	pop ebp
 	ret
 
 _start:
@@ -153,8 +177,10 @@ loop:
 
 	; EDI holds summ now
 div_preparation:
+	call print_limiting_line
 	mov eax, edi
 	mov esi, 10
+
 push_remainder:
 	div esi
 	test eax, eax			; if the quotient is equal to 0
