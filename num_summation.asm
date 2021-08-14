@@ -21,73 +21,42 @@ section .bss
 remainder			resb 4
 buffer				resb 120
 
+%macro subroutine_call_2 3	; number of parametres
+	push %3
+	push %2
+	call %1
+	add esp, 8
+%endmacro
+
 section .text
-print_digit:
-	push ebp				; save an old value of EBP
+print_smth:
+	push ebp				; save the old value
 	mov ebp, esp
+	push esi
+	push edi
+	mov esi, [ebp + 12]		; argument 1: length 
+	mov edi, [ebp + 8]		; argument 2: memory adress for printing
 %ifdef OS_FREEBSD
-	push 4
-	push remainder
-	push STDOUT				; 1
+	push esi				; length
+	push edi				; memory adress
+	push dword STDOUT		; 1
 	mov	eax, SYSCALL_WRITE	; 4
 	push eax				; avoiding calling "kernel" subroutine
 	int 80h
 	add esp, 16				; cleaning the stack
 %elifdef OS_LINUX
-	mov ecx, remainder
-	mov edx, 4
+	mov ecx, edi			; memory adress
+	mov edx, esi			; length
 	mov	eax, SYSCALL_WRITE	; 4
 	mov	ebx, STDOUT			; 1
 	int 80h
 %else
 %error define OS_FREEBSD or OS_LINUX
 %endif
+	pop edi
+	pop esi
 	mov esp, ebp
-	pop ebp					; restore an old value of EBP
-	ret
-
-print_new_line:
-	push ebp				; save an old value of EBP
-	mov ebp, esp
-%ifdef OS_FREEBSD
-	push NEW_LINE_LENGTH
-	push NEW_LINE
-	push STDOUT				; 1
-	mov eax, SYSCALL_WRITE	; 4
-	push eax				; avoiding calling "kernel" subroutine
-	int 80h
-	add esp, 16				; cleaning the stack
-%elifdef OS_LINUX
-	mov ecx, NEW_LINE
-	mov edx, NEW_LINE_LENGTH
-	mov eax, SYSCALL_WRITE	; 4
-	mov ebx, STDOUT			; 1
-	int 80h
-%endif
-	mov esp, ebp
-	pop ebp					; restore an old value of EBP
-	ret
-
-print_limiting_line:
-	push ebp
-	mov ebp, esp
-%ifdef OS_FREEBSD
-	push LIMIT_LINE_LENGTH
-	push LIMITING_LINE
-	push STDOUT
-	mov eax, SYSCALL_WRITE
-	push eax
-	int 80h
-	add esp, 16
-%elifdef OS_LINUX
-	mov ecx, LIMITING_LINE
-	mov edx, LIMIT_LINE_LENGTH
-	mov eax, SYSCALL_WRITE
-	mov ebx, STDOUT
-	int 80h
-%endif
-	mov esp, ebp
-	pop ebp
+	pop ebp					; restore the old value
 	ret
 
 _start:
@@ -122,21 +91,7 @@ again:
 	jmp again
 
 .unexpected_symbol:
-%ifdef OS_FREEBSD
-	push UNEXPECT_MSG_LENGTH
-	push UNEXPECT_MSG
-	push STDOUT
-	mov eax, SYSCALL_WRITE
-	push eax
-	int 80h
-	add esp, 16				; cleaning the stack
-%elifdef OS_LINUX
-	mov eax, SYSCALL_WRITE
-	mov ebx, STDOUT
-	mov ecx, UNEXPECT_MSG
-	mov edx, UNEXPECT_MSG_LENGTH
-	int 80h
-%endif
+	subroutine_call_2 print_smth, UNEXPECT_MSG, UNEXPECT_MSG_LENGTH
 	jmp again
 
 	; ESI now holds the adress of the last input element in [buffer] memory \
@@ -177,7 +132,7 @@ loop:
 
 	; EDI holds summ now
 div_preparation:
-	call print_limiting_line
+	subroutine_call_2 print_smth, LIMITING_LINE, LIMIT_LINE_LENGTH
 	mov eax, edi
 	mov esi, 10
 
@@ -194,17 +149,19 @@ push_remainder:
 	xor edx, edx
 	inc ebp					; counting the numbers of "pushing"
 pop_remainder:
-	xor eax, eax
 	test ebp, ebp			; if counter of "pushing" is equal to 0
 	je end_div
+	xor eax, eax
 	pop eax
 	mov [remainder], eax
 	add byte [remainder], 48; get digit
-	call print_digit
+
+	subroutine_call_2 print_smth, remainder, 4
+
 	dec ebp					; decrement the counter of "pushing"
 	jmp pop_remainder
 end_div:
-	call print_new_line
+	subroutine_call_2 print_smth, NEW_LINE, NEW_LINE_LENGTH
 
 quit:
 %ifdef OS_FREEBSD
