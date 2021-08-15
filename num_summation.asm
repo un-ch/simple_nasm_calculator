@@ -28,12 +28,22 @@ buffer				resb 120
 	add esp, 8
 %endmacro
 
+%macro subroutine_call 1-*
+	%rep %0 - 1
+		%rotate -1
+			push dword %1
+	%endrep
+	%rotate -1
+		call %1
+		add esp, (%0 - 1) * 4
+%endmacro
+
 section .text
 print_smth:
 	push ebp				; save the old value
 	mov ebp, esp
-	push esi
-	push edi
+	push esi				; save the old value
+	push edi				; save the old value
 	mov esi, [ebp + 12]		; argument 1: length 
 	mov edi, [ebp + 8]		; argument 2: memory adress for printing
 %ifdef OS_FREEBSD
@@ -53,8 +63,8 @@ print_smth:
 %else
 %error define OS_FREEBSD or OS_LINUX
 %endif
-	pop edi
-	pop esi
+	pop edi					; restore the old value
+	pop esi					; restore the old value
 	mov esp, ebp
 	pop ebp					; restore the old value
 	ret
@@ -91,7 +101,7 @@ again:
 	jmp again
 
 .unexpected_symbol:
-	subroutine_call_2 print_smth, UNEXPECT_MSG, UNEXPECT_MSG_LENGTH
+	subroutine_call print_smth, UNEXPECT_MSG, UNEXPECT_MSG_LENGTH
 	jmp again
 
 	; ESI now holds the adress of the last input element in [buffer] memory \
@@ -132,7 +142,7 @@ loop:
 
 	; EDI holds summ now
 div_preparation:
-	subroutine_call_2 print_smth, LIMITING_LINE, LIMIT_LINE_LENGTH
+	subroutine_call print_smth, LIMITING_LINE, LIMIT_LINE_LENGTH
 
 	xor edx, edx
 	mov eax, edi
@@ -157,12 +167,12 @@ pop_remainder:
 	mov [remainder], eax
 	add byte [remainder], 48; get digit
 
-	subroutine_call_2 print_smth, remainder, 4
+	subroutine_call print_smth, remainder, 4
 
 	dec ebp					; decrement the counter of "pushing"
 	jmp pop_remainder
 end_div:
-	subroutine_call_2 print_smth, NEW_LINE, NEW_LINE_LENGTH
+	subroutine_call print_smth, NEW_LINE, NEW_LINE_LENGTH
 
 quit:
 %ifdef OS_FREEBSD
