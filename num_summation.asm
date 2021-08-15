@@ -133,9 +133,10 @@ loop:
 	; EDI holds summ now
 div_preparation:
 	subroutine_call_2 print_smth, LIMITING_LINE, LIMIT_LINE_LENGTH
+
+	xor edx, edx
 	mov eax, edi
 	mov esi, 10
-
 push_remainder:
 	div esi
 	test eax, eax			; if the quotient is equal to 0
