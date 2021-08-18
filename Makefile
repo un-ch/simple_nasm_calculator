@@ -11,13 +11,13 @@ endif
 NASMFLAGS = -f elf -d$(OS)
 NASM = nasm
 
-num_summation: num_summation.o
-	@$(LD) $(LDFLAGS) num_summation.o -o num_summation
+simple_nasm_calculator: simple_nasm_calculator.o
+	@$(LD) $(LDFLAGS) simple_nasm_calculator.o -o simple_nasm_calculator
 
-num_summation.o: num_summation.asm
-	@$(NASM) $(NASMFLAGS) num_summation.asm
+simple_nasm_calculator.o: simple_nasm_calculator.asm
+	@$(NASM) $(NASMFLAGS) simple_nasm_calculator.asm
 
 run:
-	@./num_summation
+	@./simple_nasm_calculator
 clean:
-	@rm -f *.o num_summation
+	@rm -f *.o simple_nasm_calculator
