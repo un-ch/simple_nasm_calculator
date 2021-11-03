@@ -1,2 +1,2 @@
-# num_summation
+# simple_nasm_calculator
 
