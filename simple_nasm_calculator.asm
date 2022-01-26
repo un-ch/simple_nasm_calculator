@@ -111,7 +111,7 @@ again:
 loop:
 	cmp esi, buffer			; first element ?
 	jl div_preparation
-	cmp byte [esi], 10		; line feed ?
+	cmp byte [esi], NEW_LINE_SYMBOL_CODE		; line feed ?
 	je .next_summand
 .next_digit:
 	movzx eax, byte [esi]
