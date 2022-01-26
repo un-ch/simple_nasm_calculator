@@ -40,16 +40,16 @@ print_smth:
 %ifdef OS_FREEBSD
 	push esi				; length
 	push edi				; memory adress
-	push dword STDOUT		; 1
-	mov	eax, SYSCALL_WRITE	; 4
+	push dword STDOUT
+	mov	eax, SYSCALL_WRITE
 	push eax				; avoiding calling "kernel" subroutine
 	int 80h
 	add esp, 16				; cleaning the stack
 %elifdef OS_LINUX
 	mov ecx, edi			; memory adress
 	mov edx, esi			; length
-	mov	eax, SYSCALL_WRITE	; 4
-	mov	ebx, STDOUT			; 1
+	mov	eax, SYSCALL_WRITE
+	mov	ebx, STDOUT
 	int 80h
 %else
 %error define OS_FREEBSD or OS_LINUX
@@ -68,13 +68,13 @@ again:
 	push 1					; length
 	push esi
 	push STDIN
-	mov eax, SYSCALL_READ	; 3
+	mov eax, SYSCALL_READ
 	push eax				; avoiding calling "kernel" subroutine
 	int 80h
 	add esp, 16				; cleaning the stack
 %elifdef OS_LINUX
-	mov eax, SYSCALL_READ	; 3
-	mov ebx, STDIN			; 0
+	mov eax, SYSCALL_READ
+	mov ebx, STDIN
 	mov ecx, esi			; buffer adress --> ecx
 	mov edx, 1				; length
 	int 80h
@@ -168,11 +168,11 @@ end_div:
 quit:
 %ifdef OS_FREEBSD
 	push EXIT_SUCCESS_CODE
-	mov eax, SYSCALL_EXIT	; 1
+	mov eax, SYSCALL_EXIT
 	push eax				; avoiding calling "kernel" subroutine
 	int 80h
 %elifdef OS_LINUX
-	mov eax, SYSCALL_EXIT	; 1
+	mov eax, SYSCALL_EXIT
 	mov ebx, EXIT_SUCCESS_CODE
 	int 80h
 %endif
