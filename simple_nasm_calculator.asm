@@ -17,6 +17,7 @@ SYSCALL_EXIT		equ 1
 SYSCALL_READ		equ 3
 SYSCALL_WRITE		equ 4
 
+NEW_LINE_SYMBOL_CODE	equ 10
 section .bss
 remainder			resb 4
 buffer				resb 120
@@ -80,7 +81,7 @@ again:
 %endif
 	cmp byte [esi], 0		; EOF ?
 	je .end_input
-	cmp byte [esi], 10
+	cmp byte [esi], NEW_LINE_SYMBOL_CODE
 	je .next_byte
 	cmp byte [esi], 48
 	jb .unexpected_symbol
