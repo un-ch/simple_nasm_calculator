@@ -1,7 +1,7 @@
 global _start
 
 section .data
-NEW_LINE			db	10
+NEW_LINE		db	10
 NEW_LINE_LENGTH		equ	$-NEW_LINE
 EXIT_SUCCESS_CODE 	equ	0
 UNEXPECT_MSG		db	"unexpected symbol here", 10
@@ -9,17 +9,17 @@ UNEXPECT_MSG_LENGTH	equ $-UNEXPECT_MSG
 LIMITING_LINE		db	"____", 10
 LIMIT_LINE_LENGTH	equ	$-LIMITING_LINE
 
-STDIN				equ 0
-STDOUT				equ 1
-STDERR				equ 2
+STDIN			equ 0
+STDOUT			equ 1
+STDERR			equ 2
 
 SYSCALL_EXIT		equ 1
 SYSCALL_READ		equ 3
 SYSCALL_WRITE		equ 4
 
 section .bss
-remainder			resb 4
-buffer				resb 120
+remainder		resb 4
+buffer			resb 120
 
 %macro subroutine_call_2 3	; number of parametres
 	push %3
@@ -44,20 +44,20 @@ print_smth:
 	mov ebp, esp
 	push esi				; save the old value
 	push edi				; save the old value
-	mov esi, [ebp + 12]		; argument 1: length 
-	mov edi, [ebp + 8]		; argument 2: memory adress for printing
+	mov esi, [ebp + 12]			; argument 1: length 
+	mov edi, [ebp + 8]			; argument 2: memory adress for printing
 %ifdef OS_FREEBSD
 	push esi				; length
 	push edi				; memory adress
-	push dword STDOUT		; 1
-	mov	eax, SYSCALL_WRITE	; 4
+	push dword STDOUT			; 1
+	mov	eax, SYSCALL_WRITE		; 4
 	push eax				; avoiding calling "kernel" subroutine
 	int 80h
 	add esp, 16				; cleaning the stack
 %elifdef OS_LINUX
-	mov ecx, edi			; memory adress
-	mov edx, esi			; length
-	mov	eax, SYSCALL_WRITE	; 4
+	mov ecx, edi				; memory adress
+	mov edx, esi				; length
+	mov	eax, SYSCALL_WRITE		; 4
 	mov	ebx, STDOUT			; 1
 	int 80h
 %else
@@ -70,25 +70,25 @@ print_smth:
 	ret
 
 _start:
-	mov esi, buffer			; buffer adress --> ESI
+	mov esi, buffer				; buffer adress --> ESI
 again:
 	; input number:
 %ifdef OS_FREEBSD
 	push 1					; length
 	push esi
 	push STDIN
-	mov eax, SYSCALL_READ	; 3
+	mov eax, SYSCALL_READ			; 3
 	push eax				; avoiding calling "kernel" subroutine
 	int 80h
 	add esp, 16				; cleaning the stack
 %elifdef OS_LINUX
-	mov eax, SYSCALL_READ	; 3
-	mov ebx, STDIN			; 0
-	mov ecx, esi			; buffer adress --> ecx
+	mov eax, SYSCALL_READ			; 3
+	mov ebx, STDIN				; 0
+	mov ecx, esi				; buffer adress --> ecx
 	mov edx, 1				; length
 	int 80h
 %endif
-	cmp byte [esi], 0		; EOF ?
+	cmp byte [esi], 0			; EOF ?
 	je .end_input
 	cmp byte [esi], 10
 	je .next_byte
@@ -118,15 +118,15 @@ again:
 	mov ebx, 1
 	; EDI will hold sum:
 loop:
-	cmp esi, buffer			; first element ?
+	cmp esi, buffer				; first element ?
 	jl div_preparation
-	cmp byte [esi], 10		; line feed ?
+	cmp byte [esi], 10			; line feed ?
 	je .next_summand
 .next_digit:
 	movzx eax, byte [esi]
 	sub eax, 48				; get value
 	mul ebx
-	add edi, eax			; EDI holds current sum
+	add edi, eax				; EDI holds current sum
 	dec esi					; previous byte(?) in buffer memory
 
 	; update the result of raising the base 10 to the power for the next iteration:
@@ -149,7 +149,7 @@ div_preparation:
 	mov esi, 10
 push_remainder:
 	div esi
-	test eax, eax			; if the quotient is equal to 0
+	test eax, eax				; if the quotient is equal to 0
 	je .last_push
 	push edx				; push remainder
 	xor edx, edx
@@ -160,7 +160,7 @@ push_remainder:
 	xor edx, edx
 	inc ebp					; counting the numbers of "pushing"
 pop_remainder:
-	test ebp, ebp			; if counter of "pushing" is equal to 0
+	test ebp, ebp				; if counter of "pushing" is equal to 0
 	je end_div
 	xor eax, eax
 	pop eax
@@ -177,11 +177,11 @@ end_div:
 quit:
 %ifdef OS_FREEBSD
 	push EXIT_SUCCESS_CODE
-	mov eax, SYSCALL_EXIT	; 1
+	mov eax, SYSCALL_EXIT			; 1
 	push eax				; avoiding calling "kernel" subroutine
 	int 80h
 %elifdef OS_LINUX
-	mov eax, SYSCALL_EXIT	; 1
+	mov eax, SYSCALL_EXIT			; 1
 	mov ebx, EXIT_SUCCESS_CODE
 	int 80h
 %endif
